@@ -1,7 +1,7 @@
 const express = require("express");
-const app = express();
 const cors = require("cors");
-const port = process.env.PORT || 8000;
+const app = express();
+const port = process.env.PORT || 5000;
 
 require("dotenv").config();
 
@@ -18,14 +18,33 @@ const client = new MongoClient(uri, {
 });
 
 async function run() {
-  try{
+  try {
+    await client.connect();
+    const products = client.db("emaJohn").collection("products");
 
-  }
-  finally{
-    
+    //loaded all the datas to show
+    app.get("/products", async (req, res) => {
+      const page = parseInt(req.query.page);
+      const size = parseInt(req.query.size);
+      console.log(page, size);
+      const query = {};
+      const cursor = products.find(query);
+      const result = await cursor.toArray();
+
+      res.send(result);
+    });
+
+    //loading data for pagination
+
+    app.get("/productPerPage", async (req, res) => {
+      const pages = await products.estimatedDocumentCount();
+
+      res.send({ pages });
+    });
+  } finally {
+    console.log("Connected to MongoDB");
   }
 }
-
 run().catch(console.dir);
 
 app.get("/", (req, res) => {
@@ -34,6 +53,3 @@ app.get("/", (req, res) => {
 
 //listening to port
 app.listen(port, () => console.log("The port is running in", port));
-
-//
-//
